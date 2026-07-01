@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { PythonScriptFinder } from './pythonScriptFinder';
 
 export interface ScriptMetadata {
     filePath: string;
@@ -11,19 +12,9 @@ export interface ScriptMetadata {
 }
 
 export class ScriptValidator {
-    private static readonly IGNORED_DIRECTORIES = new Set([
-        '.git',
-        '.venv',
-        'venv',
-        'env',
-        'node_modules',
-        'dist',
-        'out',
-        '__pycache__'
-    ]);
-
     private static readonly SCRIPT_NAME_PATTERN = /(?:SCRIPT_NAME|RULE_NAME):\s*(.+?)(?:\r?\n|$)/;
     private static readonly SCRIPT_DESCRIPTION_PATTERN = /(?:SCRIPT_DESCRIPTION|RULE_DESCRIPTION):\s*(.+?)(?:\r?\n|$)/;
+    private static readonly scriptFinder = new PythonScriptFinder();
 
     public static validateScript(filePath: string): ScriptMetadata {
         const fileName = path.basename(filePath, '.py');
@@ -67,34 +58,13 @@ export class ScriptValidator {
             return [];
         }
 
-        return this.findPythonScripts(rootPath)
+        return this.scriptFinder.find(rootPath)
             .map(filePath => this.validateScript(filePath))
             .sort((a, b) => a.filePath.localeCompare(b.filePath));
     }
 
     public static getValidScripts(rootPath: string): ScriptMetadata[] {
         return this.validateScriptsInDirectory(rootPath).filter(script => script.isValid);
-    }
-
-    private static findPythonScripts(directoryPath: string): string[] {
-        const scripts: string[] = [];
-
-        for (const entry of fs.readdirSync(directoryPath, { withFileTypes: true })) {
-            const entryPath = path.join(directoryPath, entry.name);
-
-            if (entry.isDirectory()) {
-                if (!this.IGNORED_DIRECTORIES.has(entry.name)) {
-                    scripts.push(...this.findPythonScripts(entryPath));
-                }
-                continue;
-            }
-
-            if (entry.isFile() && entry.name.endsWith('.py')) {
-                scripts.push(entryPath);
-            }
-        }
-
-        return scripts;
     }
 
     private static formatFileName(fileName: string): string {

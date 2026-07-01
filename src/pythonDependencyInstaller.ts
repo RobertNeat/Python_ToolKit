@@ -1,0 +1,126 @@
+import * as child_process from 'child_process';
+import { BASE_PACKAGES } from './pythonDependencyCatalog';
+import { PythonDependencyScanner } from './pythonDependencyScanner';
+
+export interface InstallResult {
+    success: boolean;
+    installed: string[];
+    failed: string[];
+    alreadyInstalled: string[];
+    message: string;
+}
+
+export class PythonDependencyInstaller {
+    public constructor(private readonly dependencyScanner = new PythonDependencyScanner()) {}
+
+    public async installDependencies(
+        pipPath: string,
+        scriptsPath: string,
+        onProgress?: (message: string) => void
+    ): Promise<InstallResult> {
+        const scriptPackages = this.dependencyScanner.scanScriptsForImports(scriptsPath);
+        const packages = Array.from(new Set([...BASE_PACKAGES, ...scriptPackages]));
+
+        if (packages.length === 0) {
+            return {
+                success: true,
+                installed: [],
+                failed: [],
+                alreadyInstalled: [],
+                message: 'Nie znaleziono zewnętrznych bibliotek do zainstalowania'
+            };
+        }
+
+        const installed: string[] = [];
+        const failed: string[] = [];
+        const alreadyInstalled: string[] = [];
+
+        onProgress?.('Aktualizacja pip...');
+        await this.upgradePip(pipPath);
+
+        for (const packageName of packages) {
+            onProgress?.(`Instalowanie: ${packageName}...`);
+
+            const result = await this.installPackage(pipPath, packageName);
+
+            if (result.success) {
+                if (result.alreadyInstalled) {
+                    alreadyInstalled.push(packageName);
+                } else {
+                    installed.push(packageName);
+                }
+            } else {
+                failed.push(packageName);
+            }
+        }
+
+        return {
+            success: failed.length === 0,
+            installed,
+            failed,
+            alreadyInstalled,
+            message: this.buildInstallMessage(installed, failed, alreadyInstalled)
+        };
+    }
+
+    private async installPackage(
+        pipPath: string,
+        packageName: string
+    ): Promise<{ success: boolean; alreadyInstalled: boolean; error?: string }> {
+        return new Promise((resolve) => {
+            const command = `"${pipPath}" install "${packageName}"`;
+
+            child_process.exec(
+                command,
+                { timeout: 300000 },
+                (error, stdout, stderr) => {
+                    if (error) {
+                        resolve({
+                            success: false,
+                            alreadyInstalled: false,
+                            error: stderr || error.message
+                        });
+                        return;
+                    }
+
+                    const alreadyInstalled = stdout.includes('already satisfied') ||
+                                              stdout.includes('Requirement already');
+                    resolve({
+                        success: true,
+                        alreadyInstalled
+                    });
+                }
+            );
+        });
+    }
+
+    private async upgradePip(pipPath: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            const command = `"${pipPath}" install --upgrade pip`;
+
+            child_process.exec(
+                command,
+                { timeout: 120000 },
+                (error) => {
+                    resolve(!error);
+                }
+            );
+        });
+    }
+
+    private buildInstallMessage(installed: string[], failed: string[], alreadyInstalled: string[]): string {
+        if (failed.length > 0) {
+            return `Nie udało się zainstalować ${failed.length} bibliotek: ${failed.join(', ')}`;
+        }
+
+        if (installed.length === 0 && alreadyInstalled.length > 0) {
+            return 'Wszystkie biblioteki były już zainstalowane';
+        }
+
+        if (installed.length > 0) {
+            return `Zainstalowano ${installed.length} bibliotek`;
+        }
+
+        return 'Instalacja zakończona';
+    }
+}
