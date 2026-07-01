@@ -1,0 +1,61 @@
+{
+  "name": "python-venv-toolkit",
+  "displayName": "Python Venv Toolkit",
+  "description": "Simple VS Code side panel for Python virtual environment setup, dependency installation from imports, and script execution.",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RobertNeat/python-venv-toolkit.git"
+  },
+  "engines": {
+    "vscode": "^1.108.1"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "python-venv-toolkit",
+          "title": "Python Venv",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "python-venv-toolkit": [
+        {
+          "type": "webview",
+          "id": "python-venv-toolkit.mainView",
+          "name": "Python Venv"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "npm run compile-tests && npm run compile && npm run lint"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.108.1",
+    "esbuild": "^0.28.1",
+    "eslint": "^9.39.2",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "problemMatchers": [
+    {
+      "name": "esbuild-watch",
+      "owner": "typescript",
+      "applyTo": "allDocuments",
+      "fileLocation": ["relative", "${workspaceFolder}"],
+      "pattern": [
+        {
+          "regexp": "^✘ \\[ERROR\\] (.+):(\\d+):(\\d+): (.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      ],
+      "background": {
+        "activeOnStart": true,
+        "beginsPattern": "watching for changes",
+        "endsPattern": "built in"
+      }
+    }
+  ]
+}
