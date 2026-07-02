@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { PythonScriptFinder } from './pythonScriptFinder';
+import { translations } from './translations';
 
 export interface ScriptMetadata {
     filePath: string;
@@ -27,7 +28,7 @@ export class ScriptValidator {
         };
 
         if (!fs.existsSync(filePath)) {
-            metadata.validationError = 'Plik nie istnieje';
+            metadata.validationError = translations.validation.fileDoesNotExist;
             return metadata;
         }
 
@@ -35,7 +36,7 @@ export class ScriptValidator {
         try {
             content = fs.readFileSync(filePath, 'utf-8');
         } catch (error) {
-            metadata.validationError = error instanceof Error ? error.message : 'Nie można odczytać pliku';
+            metadata.validationError = error instanceof Error ? error.message : translations.validation.cannotReadFile;
             return metadata;
         }
 

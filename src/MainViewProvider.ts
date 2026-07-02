@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { PythonDetector, PythonInfo } from './pythonDetector';
 import { ScriptMetadata, ScriptValidator } from './scriptValidator';
 import { ScriptRunner } from './scriptRunner';
+import { translations } from './translations';
 import { VenvManager, VenvStatus } from './venvManager';
 import { MainViewHtmlRenderer } from './webview/MainViewHtmlRenderer';
 import { MainViewState } from './webview/MainViewState';
@@ -134,17 +135,19 @@ export class MainViewProvider implements vscode.WebviewViewProvider, vscode.Disp
     private async initializeVenv(forceRecreate: boolean): Promise<void> {
         const workspacePath = this.getWorkspacePath();
         if (!workspacePath || !this.pythonInfo?.found || !this.pythonInfo.path) {
-            this.sendToast('Otwórz folder roboczy i upewnij się, że Python jest dostępny.', 'error');
+            this.sendToast(translations.notifications.openWorkspaceAndEnsurePython, 'error');
             return;
         }
 
-        this.startVenvOperation(forceRecreate ? 'Reinicjalizacja środowiska...' : 'Inicjalizacja środowiska...');
+        this.startVenvOperation(
+            forceRecreate ? translations.progress.reinitializingVenv : translations.progress.initializingVenv
+        );
 
         if (forceRecreate) {
             const deleteResult = await VenvManager.deleteVenv(workspacePath);
             if (!deleteResult.success) {
                 this.finishVenvOperation();
-                this.sendToast(deleteResult.error || 'Nie udało się usunąć środowiska.', 'error');
+                this.sendToast(deleteResult.error || translations.notifications.failedToRemoveVenv, 'error');
                 return;
             }
         }
@@ -159,26 +162,29 @@ export class MainViewProvider implements vscode.WebviewViewProvider, vscode.Disp
         await this.refreshVenvAfterOperation();
 
         if (!result.venvResult.success) {
-            this.sendToast(result.venvResult.error || 'Nie udało się utworzyć środowiska.', 'error');
+            this.sendToast(result.venvResult.error || translations.notifications.failedToCreateVenv, 'error');
             return;
         }
 
         if (result.installResult?.failed.length) {
-            this.sendToast(`Nie udało się zainstalować: ${result.installResult.failed.join(', ')}`, 'error');
+            this.sendToast(translations.notifications.failedToInstall(result.installResult.failed.join(', ')), 'error');
             return;
         }
 
-        this.sendToast(forceRecreate ? 'Środowisko zostało zreinicjalizowane.' : 'Środowisko jest gotowe.', 'info');
+        this.sendToast(
+            forceRecreate ? translations.notifications.venvReinitialized : translations.notifications.venvReady,
+            'info'
+        );
     }
 
     private async installDependencies(): Promise<void> {
         const workspacePath = this.getWorkspacePath();
         if (!workspacePath || !this.venvStatus?.isValid) {
-            this.sendToast('Najpierw utwórz poprawne środowisko .venv.', 'error');
+            this.sendToast(translations.notifications.createValidVenvFirst, 'error');
             return;
         }
 
-        this.startVenvOperation('Instalowanie zależności z importów...');
+        this.startVenvOperation(translations.progress.installingDependenciesFromImports);
 
         const result = await VenvManager.installDependencies(
             workspacePath,
@@ -195,12 +201,12 @@ export class MainViewProvider implements vscode.WebviewViewProvider, vscode.Disp
         const script = this.scripts.find(item => item.filePath === this.selectedScriptPath);
 
         if (!workspacePath || !script) {
-            this.sendToast('Wybierz skrypt Python do uruchomienia.', 'error');
+            this.sendToast(translations.notifications.selectPythonScript, 'error');
             return;
         }
 
         if (!this.pythonInfo?.found) {
-            this.sendToast('Python nie został wykryty.', 'error');
+            this.sendToast(translations.notifications.pythonNotDetected, 'error');
             return;
         }
 
@@ -217,7 +223,7 @@ export class MainViewProvider implements vscode.WebviewViewProvider, vscode.Disp
 
         ScriptRunner.showResultInOutput(script, result, this.outputChannel);
         this.sendToast(
-            result.success ? 'Skrypt zakończył działanie.' : 'Skrypt zakończył się błędem.',
+            result.success ? translations.notifications.scriptFinished : translations.notifications.scriptFailed,
             result.success ? 'info' : 'error'
         );
     }

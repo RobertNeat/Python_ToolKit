@@ -7,6 +7,7 @@ import {
   PythonDependencyInstaller,
 } from "./pythonDependencyInstaller";
 import { PythonDependencyScanner } from "./pythonDependencyScanner";
+import { translations } from "./translations";
 
 export { InstallResult } from "./pythonDependencyInstaller";
 
@@ -64,7 +65,7 @@ export class VenvManager {
         null,
         null,
         false,
-        "Brak interpretera Python w środowisku wirtualnym",
+        translations.results.pythonInterpreterMissing,
       );
     }
 
@@ -74,7 +75,7 @@ export class VenvManager {
         pythonPath,
         null,
         false,
-        "Brak pip w środowisku wirtualnym",
+        translations.results.pipMissing,
       );
     }
 
@@ -84,7 +85,7 @@ export class VenvManager {
       pythonPath,
       pipPath,
       isValid,
-      isValid ? undefined : "Środowisko wirtualne jest uszkodzone",
+      isValid ? undefined : translations.results.venvBroken,
     );
   }
 
@@ -102,7 +103,7 @@ export class VenvManager {
           if (error) {
             resolve({
               success: false,
-              message: "Nie udało się utworzyć środowiska wirtualnego",
+              message: translations.results.failedToCreateVenv,
               error: stderr || error.message,
             });
             return;
@@ -110,7 +111,7 @@ export class VenvManager {
 
           resolve({
             success: true,
-            message: "Środowisko wirtualne zostało utworzone",
+            message: translations.results.venvCreated,
           });
         },
       );
@@ -125,7 +126,7 @@ export class VenvManager {
     if (!fs.existsSync(venvPath)) {
       return {
         success: true,
-        message: "Środowisko wirtualne nie istnieje",
+        message: translations.results.venvMissing,
       };
     }
 
@@ -133,12 +134,12 @@ export class VenvManager {
       fs.rmSync(venvPath, { recursive: true, force: true });
       return {
         success: true,
-        message: "Środowisko wirtualne zostało usunięte",
+        message: translations.results.venvDeleted,
       };
     } catch (error) {
       return {
         success: false,
-        message: "Nie udało się usunąć środowiska wirtualnego",
+        message: translations.results.failedToRemoveVenv,
         error: error instanceof Error ? error.message : String(error),
       };
     }
@@ -171,7 +172,7 @@ export class VenvManager {
         installed: [],
         failed: [],
         alreadyInstalled: [],
-        message: "Środowisko wirtualne nie jest gotowe",
+        message: translations.results.venvNotReady,
       };
     }
 
@@ -191,7 +192,7 @@ export class VenvManager {
     venvResult: VenvOperationResult;
     installResult?: InstallResult;
   }> {
-    onProgress?.("Sprawdzanie środowiska wirtualnego...");
+    onProgress?.(translations.progress.checkingVenv);
     const readyResult = await this.ensureVenv(
       workspacePath,
       systemPythonPath,
@@ -202,7 +203,7 @@ export class VenvManager {
       return { venvResult: readyResult };
     }
 
-    onProgress?.("Instalowanie bibliotek...");
+    onProgress?.(translations.progress.installingDependencies);
     const installResult = await this.installDependencies(
       workspacePath,
       scriptsPath,
@@ -212,7 +213,7 @@ export class VenvManager {
     return {
       venvResult: {
         success: true,
-        message: "Środowisko wirtualne jest gotowe",
+        message: translations.results.venvReady,
       },
       installResult,
     };
@@ -226,7 +227,7 @@ export class VenvManager {
     let status = await this.checkVenvStatus(workspacePath);
 
     if (status.exists && !status.isValid) {
-      onProgress?.("Usuwanie uszkodzonego środowiska...");
+      onProgress?.(translations.progress.removingBrokenVenv);
       await this.deleteVenv(workspacePath);
       status = await this.checkVenvStatus(workspacePath);
     }
@@ -234,11 +235,11 @@ export class VenvManager {
     if (status.exists && status.isValid) {
       return {
         success: true,
-        message: "Środowisko wirtualne jest gotowe",
+        message: translations.results.venvReady,
       };
     }
 
-    onProgress?.("Tworzenie środowiska wirtualnego...");
+    onProgress?.(translations.progress.creatingVenv);
     const createResult = await this.createVenv(workspacePath, systemPythonPath);
     if (!createResult.success) {
       return createResult;
@@ -248,7 +249,7 @@ export class VenvManager {
     if (!createdStatus.isValid) {
       return {
         success: false,
-        message: "Nie udało się zweryfikować środowiska wirtualnego",
+        message: translations.results.failedToVerifyVenv,
         error: createdStatus.error,
       };
     }

@@ -1,55 +1,57 @@
 # Python Venv Toolkit
 
-Proste rozszerzenie VS Code do zarządzania środowiskiem wirtualnym Python w bieżącym folderze roboczym.
+A simple VS Code extension for managing a Python virtual environment in the current workspace folder.
 
-## Funkcje
+<img src="media/extension_screenshot.png" alt="Extension screenshot" style="border: 1px solid white;">
 
-- automatyczne wykrywanie interpretera Python,
-- automatyczne tworzenie środowiska `.venv` w katalogu roboczym,
-- możliwość usunięcia i ponownego zainicjalizowania `.venv`,
-- wykrywanie importów w skryptach `.py` i instalowanie brakujących bibliotek przez `pip`,
-- wybór skryptu Python z panelu bocznego,
-- uruchamianie wybranego skryptu interpreterem z `.venv`,
-- wynik działania skryptu w kanale Output: `Python Venv Toolkit`.
+## Features
 
-## Wymagania
+- automatic Python interpreter detection,
+- automatic creation of a `.venv` environment in the workspace directory,
+- ability to delete and reinitialize `.venv`,
+- detection of imports in `.py` scripts and installation of missing libraries via `pip`,
+- selection of a Python script from the side panel,
+- running the selected script using the interpreter from `.venv`,
+- script output in the Output channel: `Python Venv Toolkit`.
 
-- VS Code 1.108.1 lub nowszy,
-- Python 3.x dostępny w `PATH` albo w standardowej lokalizacji systemowej,
+## Requirements
+
+- VS Code 1.108.1 or newer,
+- Python 3.x available in `PATH` or in a standard system location,
 - npm.
 
-## Instalacja zależności projektu
+## Installing Project Dependencies
 
 ```bash
 npm install
 ```
 
-## Uruchomienie w trybie developerskim
+## Running in Development Mode
 
 ```bash
 npm run compile
 ```
 
-Następnie w VS Code uruchom debugowanie rozszerzenia klawiszem `F5`.
+Then, in VS Code, start extension debugging by pressing `F5`.
 
-## Użycie
+## Usage
 
-1. Otwórz folder roboczy w VS Code.
-2. Otwórz panel `Python Venv` z Activity Bar.
-3. Rozszerzenie wykryje Python i utworzy `.venv` w otwartym folderze.
-4. Umieść lub wybierz dowolny skrypt `.py` w katalogu roboczym.
-5. W panelu wybierz skrypt z listy i kliknij `Uruchom skrypt`.
+1. Open a workspace folder in VS Code.
+2. Open the `Python Venv` panel from the Activity Bar.
+3. The extension will detect Python and create `.venv` in the opened folder.
+4. Place or select any `.py` script in the workspace directory.
+5. In the panel, select a script from the list and click `Run Script`.
 
-Skrypty są uruchamiane z katalogiem roboczym ustawionym na otwarty folder VS Code. Jeśli skrypt importuje biblioteki zewnętrzne, użyj przycisku `Zainstaluj zależności z importów`.
+Scripts are run with the working directory set to the opened VS Code folder. If the script imports external libraries, use the `Install dependencies from imports` button.
 
-## Metadane skryptu
+## Script Metadata
 
-Opcjonalnie można dodać nazwę i opis skryptu w komentarzu lub docstringu:
+Optionally, you can add a script name and description in a comment or docstring:
 
 ```python
 """
-SCRIPT_NAME: Raport dzienny
-SCRIPT_DESCRIPTION: Generuje raport z danych w bieżącym folderze.
+SCRIPT_NAME: Daily report
+SCRIPT_DESCRIPTION: Generates a report from data in the current folder.
 """
 
 import pandas as pd
@@ -57,9 +59,9 @@ import pandas as pd
 print("Start")
 ```
 
-Obsługiwane są też starsze nagłówki `RULE_NAME` i `RULE_DESCRIPTION`.
+Older headers `RULE_NAME` and `RULE_DESCRIPTION` are also supported.
 
-## Struktura źródeł
+## Source Structure
 
 ```text
 src/
@@ -71,7 +73,7 @@ src/
 └── venvManager.ts
 ```
 
-## Pakowanie rozszerzenia
+## Packaging the Extension
 
 ```bash
 npm install
@@ -79,4 +81,4 @@ npm run package
 npx @vscode/vsce package --no-dependencies
 ```
 
-Wynikowy plik będzie miał nazwę w stylu `python-venv-toolkit-0.1.0.vsix`.
+The resulting file will have a name like `python-venv-toolkit-0.1.0.vsix`.

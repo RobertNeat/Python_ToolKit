@@ -1,6 +1,7 @@
 import * as child_process from 'child_process';
 import { BASE_PACKAGES } from './pythonDependencyCatalog';
 import { PythonDependencyScanner } from './pythonDependencyScanner';
+import { translations } from './translations';
 
 export interface InstallResult {
     success: boolean;
@@ -27,7 +28,7 @@ export class PythonDependencyInstaller {
                 installed: [],
                 failed: [],
                 alreadyInstalled: [],
-                message: 'Nie znaleziono zewnętrznych bibliotek do zainstalowania'
+                message: translations.results.noExternalPackagesFound
             };
         }
 
@@ -35,11 +36,11 @@ export class PythonDependencyInstaller {
         const failed: string[] = [];
         const alreadyInstalled: string[] = [];
 
-        onProgress?.('Aktualizacja pip...');
+        onProgress?.(translations.progress.upgradingPip);
         await this.upgradePip(pipPath);
 
         for (const packageName of packages) {
-            onProgress?.(`Instalowanie: ${packageName}...`);
+            onProgress?.(translations.progress.installingPackage(packageName));
 
             const result = await this.installPackage(pipPath, packageName);
 
@@ -110,17 +111,17 @@ export class PythonDependencyInstaller {
 
     private buildInstallMessage(installed: string[], failed: string[], alreadyInstalled: string[]): string {
         if (failed.length > 0) {
-            return `Nie udało się zainstalować ${failed.length} bibliotek: ${failed.join(', ')}`;
+            return translations.results.failedToInstallLibraries(failed.length, failed.join(', '));
         }
 
         if (installed.length === 0 && alreadyInstalled.length > 0) {
-            return 'Wszystkie biblioteki były już zainstalowane';
+            return translations.results.allPackagesAlreadyInstalled;
         }
 
         if (installed.length > 0) {
-            return `Zainstalowano ${installed.length} bibliotek`;
+            return translations.results.installedLibraries(installed.length);
         }
 
-        return 'Instalacja zakończona';
+        return translations.results.installationCompleted;
     }
 }

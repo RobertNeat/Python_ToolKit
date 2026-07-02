@@ -1,7 +1,8 @@
 import * as childProcess from 'child_process';
 import * as vscode from 'vscode';
-import { ScriptMetadata } from './scriptValidator';
 import { PythonInfo } from './pythonDetector';
+import { ScriptMetadata } from './scriptValidator';
+import { translations } from './translations';
 
 export interface ScriptRunResult {
     success: boolean;
@@ -62,7 +63,7 @@ export class ScriptRunner {
             return {
                 success: false,
                 output: '',
-                error: 'Python nie został wykryty',
+                error: translations.notifications.pythonNotDetected,
                 exitCode: null
             };
         }
@@ -70,7 +71,7 @@ export class ScriptRunner {
         return vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: `Uruchamianie: ${script.name}`,
+                title: translations.output.running(script.name),
                 cancellable: false
             },
             async () => this.runScript(script, pythonPath, workspacePath)
@@ -84,15 +85,15 @@ export class ScriptRunner {
     ): void {
         outputChannel.clear();
         outputChannel.appendLine(`=== ${script.name} ===`);
-        outputChannel.appendLine(`Plik: ${script.filePath}`);
-        outputChannel.appendLine(`Status: ${result.success ? 'Sukces' : 'Błąd'}`);
+        outputChannel.appendLine(`${translations.output.file}: ${script.filePath}`);
+        outputChannel.appendLine(`${translations.output.status}: ${result.success ? translations.output.success : translations.output.error}`);
         outputChannel.appendLine('');
-        outputChannel.appendLine('--- Wyjście ---');
-        outputChannel.appendLine(result.output || '(brak wyjścia)');
+        outputChannel.appendLine(translations.output.output);
+        outputChannel.appendLine(result.output || translations.output.noOutput);
 
         if (result.error) {
             outputChannel.appendLine('');
-            outputChannel.appendLine('--- Błąd ---');
+            outputChannel.appendLine(`--- ${translations.output.error} ---`);
             outputChannel.appendLine(result.error);
         }
 

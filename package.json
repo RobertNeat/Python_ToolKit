@@ -20,7 +20,7 @@
       "activitybar": [
         {
           "id": "python-venv-toolkit",
-          "title": "Python ToolKit",
+          "title": "%viewsContainers.python-venv-toolkit.title%",
           "icon": "media/python_fontawesome.svg"
         }
       ]
@@ -30,7 +30,7 @@
         {
           "type": "webview",
           "id": "python-venv-toolkit.mainView",
-          "name": "Utility"
+          "name": "%views.python-venv-toolkit.mainView.name%"
         }
       ]
     }

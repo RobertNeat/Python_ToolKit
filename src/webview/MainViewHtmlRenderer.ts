@@ -1,4 +1,5 @@
 import * as path from "path";
+import { translations } from "../translations";
 import { VenvManager } from "../venvManager";
 import { escapeHtml, getNonce } from "./HtmlUtils";
 import { MainViewState } from "./MainViewState";
@@ -12,12 +13,12 @@ export class MainViewHtmlRenderer {
     const nonce = getNonce();
 
     return `<!DOCTYPE html>
-        <html lang="pl">
+        <html lang="${translations.documentLanguage}">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource}; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
-            <title>Python Venv Toolkit</title>
+            <title>${translations.title}</title>
             <style>${this.getStyles()}</style>
         </head>
         <body>
@@ -33,27 +34,27 @@ export class MainViewHtmlRenderer {
     editIconUri: string,
   ): string {
     return `<div class="stack">
-            <h2>Python environment</h2>
+            <h2>${translations.sections.pythonEnvironment}</h2>
             ${this.getPythonHtml(state)}
 
-            <h2>Working directory</h2>
+            <h2>${translations.sections.workingDirectory}</h2>
             <div class="status">
                 <div class="row">
-                    <span class="label">Status</span>
-                    <span class="value warn">No working directory selected.</span>
+                    <span class="label">${translations.labels.status}</span>
+                    <span class="value warn">${translations.statuses.noWorkingDirectory}</span>
                 </div>
             </div>
-            <button id="openWorkspaceBtn">Open working directory</button>
+            <button id="openWorkspaceBtn">${translations.buttons.openWorkingDirectory}</button>
 
-            <h2>Venv environment</h2>
+            <h2>${translations.sections.venvEnvironment}</h2>
             <div class="status">
                 <div class="row">
-                    <span class="label">Status</span>
-                    <span class="value warn">Select a working directory to create .venv.</span>
+                    <span class="label">${translations.labels.status}</span>
+                    <span class="value warn">${translations.statuses.selectWorkingDirectoryForVenv}</span>
                 </div>
             </div>
             
-            <h2>Script</h2>
+            <h2>${translations.sections.script}</h2>
             ${this.getScriptPickerHtml("", false, editIconUri)}
         </div>`;
   }
@@ -75,33 +76,33 @@ export class MainViewHtmlRenderer {
       .join("");
 
     return `<div class="stack">
-            <h2>Python environment</h2>
+            <h2>${translations.sections.pythonEnvironment}</h2>
             ${this.getPythonHtml(state)}
 
-            <h2>Working directory</h2>
-            <button id="openWorkspaceBtn" class="status path-panel" type="button" title="Change working directory">
+            <h2>${translations.sections.workingDirectory}</h2>
+            <button id="openWorkspaceBtn" class="status path-panel" type="button" title="${translations.tooltips.changeWorkingDirectory}">
                 <div class="row">
-                    <span class="label">Path</span>
+                    <span class="label">${translations.labels.path}</span>
                     <span class="value">${escapeHtml(workspacePath)}</span>
                 </div>
             </button>
-            <button id="refreshBtn" class="secondary">Refresh</button>
+            <button id="refreshBtn" class="secondary">${translations.buttons.refresh}</button>
 
-            <h2>Venv environment</h2>
+            <h2>${translations.sections.venvEnvironment}</h2>
             ${this.getVenvHtml(state, workspacePath)}
 
-            <h2>Script</h2>
+            <h2>${translations.sections.script}</h2>
             ${
               state.scripts.length
                 ? `
                 ${this.getScriptPickerHtml(scriptOptions, Boolean(selectedScript), editIconUri)}
                 ${selectedScript ? `<div class="script-meta">${escapeHtml(selectedScript.description || selectedScript.name)}</div>` : ""}
-                <button id="runScriptBtn" ${state.isVenvOperationInProgress ? "disabled" : ""}>Run script</button>
+                <button id="runScriptBtn" ${state.isVenvOperationInProgress ? "disabled" : ""}>${translations.buttons.runScript}</button>
             `
                 : `
                 ${this.getScriptPickerHtml("", false, editIconUri)}
                 <div class="status">
-                    <span class="value warn">No .py files found in the working directory.</span>
+                    <span class="value warn">${translations.statuses.noScriptsFound}</span>
                 </div>
             `
             }
@@ -110,20 +111,20 @@ export class MainViewHtmlRenderer {
 
   private getPythonHtml(state: MainViewState): string {
     if (state.isDetectingPython) {
-      return `<div class="status"><span class="value">Wykrywanie Pythona...</span></div>`;
+      return `<div class="status"><span class="value">${translations.statuses.detectingPython}</span></div>`;
     }
 
     if (!state.pythonInfo?.found) {
-      return `<div class="status"><span class="value error">Nie wykryto Pythona w systemie.</span></div>`;
+      return `<div class="status"><span class="value error">${translations.statuses.noPythonDetected}</span></div>`;
     }
 
     return `<div class="status">
             <div class="row">
-                <span class="label">Wersja</span>
+                <span class="label">${translations.labels.version}</span>
                 <span class="value ok">${escapeHtml(state.pythonInfo.version || "")}</span>
             </div>
             <div class="row">
-                <span class="label">Interpreter systemowy</span>
+                <span class="label">${translations.labels.systemInterpreter}</span>
                 <span class="value">${escapeHtml(state.pythonInfo.path || "")}</span>
             </div>
         </div>`;
@@ -138,36 +139,36 @@ export class MainViewHtmlRenderer {
       return `<div class="stack">
                 <div class="status">
                     <div class="row">
-                        <span class="label">Status</span>
-                        <span class="value ok">Gotowe</span>
+                        <span class="label">${translations.labels.status}</span>
+                        <span class="value ok">${translations.statuses.ready}</span>
                     </div>
                     <div class="row">
-                        <span class="label">Ścieżka</span>
+                        <span class="label">${translations.labels.path}</span>
                         <span class="value">${escapeHtml(VenvManager.getVenvPath(workspacePath))}</span>
                     </div>
                     <div class="row">
-                        <span class="label">Aktywny interpreter</span>
+                        <span class="label">${translations.labels.activeInterpreter}</span>
                         <span class="value">${escapeHtml(state.venvStatus.pythonPath || "")}</span>
                     </div>
                 </div>
-                <button id="installDependenciesBtn" class="secondary">Zainstaluj zależności z importów</button>
-                <button id="reinitVenvBtn" class="secondary">Usuń i zainicjalizuj ponownie</button>
+                <button id="installDependenciesBtn" class="secondary">${translations.buttons.installDependenciesFromImports}</button>
+                <button id="reinitVenvBtn" class="secondary">${translations.buttons.removeAndReinitialize}</button>
             </div>`;
     }
 
     if (state.venvStatus?.exists) {
       return `<div class="stack">
                 <div class="status">
-                    <span class="value error">Środowisko istnieje, ale jest uszkodzone.</span>
+                    <span class="value error">${translations.statuses.venvBroken}</span>
                     <span class="script-meta">${escapeHtml(state.venvStatus.error || "")}</span>
                 </div>
-                <button id="reinitVenvBtn">Usuń i zainicjalizuj ponownie</button>
+                <button id="reinitVenvBtn">${translations.buttons.removeAndReinitialize}</button>
             </div>`;
     }
 
     return `<div class="stack">
-            <div class="status"><span class="value warn">Środowisko nie istnieje.</span></div>
-            <button id="initVenvBtn">Zainicjalizuj .venv</button>
+            <div class="status"><span class="value warn">${translations.statuses.venvMissing}</span></div>
+            <button id="initVenvBtn">${translations.buttons.initializeVenv}</button>
         </div>`;
   }
 
@@ -178,10 +179,12 @@ export class MainViewHtmlRenderer {
   ): string {
     const buttonDisabled = canOpenScript ? "" : " disabled";
     const selectDisabled = scriptOptions ? "" : " disabled";
-    const options = scriptOptions || '<option value="">No scripts</option>';
+    const options =
+      scriptOptions ||
+      `<option value="">${translations.statuses.noScripts}</option>`;
 
     return `<div class="script-picker">
-                <button id="openScriptBtn" class="icon-button secondary" type="button" title="Open script" aria-label="Open script"${buttonDisabled}>
+                <button id="openScriptBtn" class="icon-button secondary" type="button" title="${translations.buttons.openScript}" aria-label="${translations.buttons.openScript}"${buttonDisabled}>
                     <img src="${escapeHtml(editIconUri)}" alt="">
                 </button>
                 <select id="scriptSelect"${selectDisabled}>${options}</select>
