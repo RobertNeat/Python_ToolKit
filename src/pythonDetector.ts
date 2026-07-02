@@ -62,12 +62,13 @@ export class PythonDetector {
                     const versionOutput = stdout.trim() || stderr.trim();
                     const versionMatch = versionOutput.match(/Python (\d+\.\d+\.\d+)/i);
 
-                    if (versionMatch) {
+                    const version = versionMatch?.[1];
+                    if (version) {
                         // Get the actual path
                         this.getPythonPath(command).then((pythonPath) => {
                             resolve({
                                 found: true,
-                                version: versionMatch[1],
+                                version,
                                 fullVersion: versionOutput,
                                 path: pythonPath || command
                             });
@@ -97,7 +98,7 @@ export class PythonDetector {
                 }
 
                 const paths = stdout.trim().split(/\r?\n/);
-                resolve(paths[0] || null);
+                resolve(paths[0] ?? null);
             });
         });
     }

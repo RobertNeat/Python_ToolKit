@@ -16,7 +16,7 @@ interface WebviewMessage {
 export class MainViewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     public static readonly viewType = 'python-venv-toolkit.mainView';
 
-    private view?: vscode.WebviewView;
+    private view: vscode.WebviewView | undefined;
     private pythonInfo: PythonInfo | null = null;
     private venvStatus: VenvStatus | null = null;
     private scripts: ScriptMetadata[] = [];

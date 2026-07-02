@@ -1,13 +1,13 @@
-import * as path from 'path';
-import { VenvManager } from '../venvManager';
-import { escapeHtml, getNonce } from './HtmlUtils';
-import { MainViewState } from './MainViewState';
+import * as path from "path";
+import { VenvManager } from "../venvManager";
+import { escapeHtml, getNonce } from "./HtmlUtils";
+import { MainViewState } from "./MainViewState";
 
 export class MainViewHtmlRenderer {
-    public render(state: MainViewState): string {
-        const nonce = getNonce();
+  public render(state: MainViewState): string {
+    const nonce = getNonce();
 
-        return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
         <html lang="pl">
         <head>
             <meta charset="UTF-8">
@@ -17,16 +17,16 @@ export class MainViewHtmlRenderer {
             <style>${this.getStyles()}</style>
         </head>
         <body>
-            <h1>Python Venv Toolkit</h1>
+            <h1>Python Venv Toolkit ##</h1>
             ${state.workspacePath ? this.getWorkspaceHtml(state, state.workspacePath) : this.getNoWorkspaceHtml(state)}
             <div id="toastContainer" class="toast-container"></div>
             <script nonce="${nonce}">${this.getScript()}</script>
         </body>
         </html>`;
-    }
+  }
 
-    private getNoWorkspaceHtml(state: MainViewState): string {
-        return `<div class="stack">
+  private getNoWorkspaceHtml(state: MainViewState): string {
+    return `<div class="stack">
             <h2>Python environment</h2>
             ${this.getPythonHtml(state)}
 
@@ -47,16 +47,24 @@ export class MainViewHtmlRenderer {
                 </div>
             </div>
         </div>`;
-    }
+  }
 
-    private getWorkspaceHtml(state: MainViewState, workspacePath: string): string {
-        const selectedScript = state.scripts.find(script => script.filePath === state.selectedScriptPath);
-        const scriptOptions = state.scripts.map(script => {
-            const selected = script.filePath === state.selectedScriptPath ? ' selected' : '';
-            return `<option value="${escapeHtml(script.filePath)}"${selected}>${escapeHtml(path.relative(workspacePath, script.filePath))}</option>`;
-        }).join('');
+  private getWorkspaceHtml(
+    state: MainViewState,
+    workspacePath: string,
+  ): string {
+    const selectedScript = state.scripts.find(
+      (script) => script.filePath === state.selectedScriptPath,
+    );
+    const scriptOptions = state.scripts
+      .map((script) => {
+        const selected =
+          script.filePath === state.selectedScriptPath ? " selected" : "";
+        return `<option value="${escapeHtml(script.filePath)}"${selected}>${escapeHtml(path.relative(workspacePath, script.filePath))}</option>`;
+      })
+      .join("");
 
-        return `<div class="stack">
+    return `<div class="stack">
             <h2>Python environment</h2>
             ${this.getPythonHtml(state)}
 
@@ -73,47 +81,51 @@ export class MainViewHtmlRenderer {
             ${this.getVenvHtml(state, workspacePath)}
 
             <h2>Script</h2>
-            ${state.scripts.length ? `
+            ${
+              state.scripts.length
+                ? `
                 <select id="scriptSelect">${scriptOptions}</select>
-                ${selectedScript ? `<div class="script-meta">${escapeHtml(selectedScript.description || selectedScript.name)}</div>` : ''}
+                ${selectedScript ? `<div class="script-meta">${escapeHtml(selectedScript.description || selectedScript.name)}</div>` : ""}
                 <button id="openScriptBtn" class="secondary">Open script</button>
-                <button id="runScriptBtn" ${state.isVenvOperationInProgress ? 'disabled' : ''}>Run script</button>
-            ` : `
+                <button id="runScriptBtn" ${state.isVenvOperationInProgress ? "disabled" : ""}>Run script</button>
+            `
+                : `
                 <div class="status">
                     <span class="value warn">No .py files found in the working directory.</span>
                 </div>
-            `}
+            `
+            }
         </div>`;
+  }
+
+  private getPythonHtml(state: MainViewState): string {
+    if (state.isDetectingPython) {
+      return `<div class="status"><span class="value">Wykrywanie Pythona...</span></div>`;
     }
 
-    private getPythonHtml(state: MainViewState): string {
-        if (state.isDetectingPython) {
-            return `<div class="status"><span class="value">Wykrywanie Pythona...</span></div>`;
-        }
+    if (!state.pythonInfo?.found) {
+      return `<div class="status"><span class="value error">Nie wykryto Pythona w systemie.</span></div>`;
+    }
 
-        if (!state.pythonInfo?.found) {
-            return `<div class="status"><span class="value error">Nie wykryto Pythona w systemie.</span></div>`;
-        }
-
-        return `<div class="status">
+    return `<div class="status">
             <div class="row">
                 <span class="label">Wersja</span>
-                <span class="value ok">${escapeHtml(state.pythonInfo.version || '')}</span>
+                <span class="value ok">${escapeHtml(state.pythonInfo.version || "")}</span>
             </div>
             <div class="row">
                 <span class="label">Interpreter systemowy</span>
-                <span class="value">${escapeHtml(state.pythonInfo.path || '')}</span>
+                <span class="value">${escapeHtml(state.pythonInfo.path || "")}</span>
             </div>
         </div>`;
+  }
+
+  private getVenvHtml(state: MainViewState, workspacePath: string): string {
+    if (state.isVenvOperationInProgress) {
+      return `<div class="status"><span class="value">${escapeHtml(state.venvOperationMessage)}</span></div>`;
     }
 
-    private getVenvHtml(state: MainViewState, workspacePath: string): string {
-        if (state.isVenvOperationInProgress) {
-            return `<div class="status"><span class="value">${escapeHtml(state.venvOperationMessage)}</span></div>`;
-        }
-
-        if (state.venvStatus?.isValid) {
-            return `<div class="stack">
+    if (state.venvStatus?.isValid) {
+      return `<div class="stack">
                 <div class="status">
                     <div class="row">
                         <span class="label">Status</span>
@@ -125,33 +137,33 @@ export class MainViewHtmlRenderer {
                     </div>
                     <div class="row">
                         <span class="label">Aktywny interpreter</span>
-                        <span class="value">${escapeHtml(state.venvStatus.pythonPath || '')}</span>
+                        <span class="value">${escapeHtml(state.venvStatus.pythonPath || "")}</span>
                     </div>
                 </div>
                 <button id="installDependenciesBtn" class="secondary">Zainstaluj zależności z importów</button>
                 <button id="openVenvFolderBtn" class="secondary">Pokaż folder .venv</button>
                 <button id="reinitVenvBtn" class="secondary">Usuń i zainicjalizuj ponownie</button>
             </div>`;
-        }
+    }
 
-        if (state.venvStatus?.exists) {
-            return `<div class="stack">
+    if (state.venvStatus?.exists) {
+      return `<div class="stack">
                 <div class="status">
                     <span class="value error">Środowisko istnieje, ale jest uszkodzone.</span>
-                    <span class="script-meta">${escapeHtml(state.venvStatus.error || '')}</span>
+                    <span class="script-meta">${escapeHtml(state.venvStatus.error || "")}</span>
                 </div>
                 <button id="reinitVenvBtn">Usuń i zainicjalizuj ponownie</button>
             </div>`;
-        }
+    }
 
-        return `<div class="stack">
+    return `<div class="stack">
             <div class="status"><span class="value warn">Środowisko nie istnieje.</span></div>
             <button id="initVenvBtn">Zainicjalizuj .venv</button>
         </div>`;
-    }
+  }
 
-    private getStyles(): string {
-        return `
+  private getStyles(): string {
+    return `
                 body {
                     color: var(--vscode-foreground);
                     background: var(--vscode-sideBar-background);
@@ -256,10 +268,10 @@ export class MainViewHtmlRenderer {
                     border: 1px solid var(--vscode-notifications-border);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
                 }`;
-    }
+  }
 
-    private getScript(): string {
-        return `
+  private getScript(): string {
+    return `
                 const vscode = acquireVsCodeApi();
 
                 function post(type, payload = {}) {
@@ -292,5 +304,5 @@ export class MainViewHtmlRenderer {
                 document.getElementById('scriptSelect')?.addEventListener('change', event => {
                     post('selectScript', { scriptPath: event.target.value });
                 });`;
-    }
+  }
 }

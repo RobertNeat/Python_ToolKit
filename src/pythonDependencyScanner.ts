@@ -25,8 +25,9 @@ export class PythonDependencyScanner {
     }
 
     private mapModuleToPackage(moduleName: string): string {
-        if (MODULE_TO_PACKAGE[moduleName]) {
-            return MODULE_TO_PACKAGE[moduleName];
+        const directPackage = MODULE_TO_PACKAGE[moduleName];
+        if (directPackage) {
+            return directPackage;
         }
 
         const lowerModuleName = moduleName.toLowerCase();
@@ -34,7 +35,7 @@ export class PythonDependencyScanner {
             key => key.toLowerCase() === lowerModuleName
         );
 
-        return mappedKey ? MODULE_TO_PACKAGE[mappedKey] : moduleName;
+        return mappedKey ? MODULE_TO_PACKAGE[mappedKey] ?? moduleName : moduleName;
     }
 
     private extractImports(content: string): string[] {
@@ -58,7 +59,10 @@ export class PythonDependencyScanner {
         let match;
 
         while ((match = pattern.exec(content)) !== null) {
-            imports.push(match[1]);
+            const moduleName = match[1];
+            if (moduleName) {
+                imports.push(moduleName);
+            }
         }
     }
 
@@ -67,6 +71,9 @@ export class PythonDependencyScanner {
 
         while ((match = pattern.exec(content)) !== null) {
             const dictContent = match[1];
+            if (!dictContent) {
+                continue;
+            }
             const keyPattern = /['"]([a-zA-Z_][a-zA-Z0-9_]*)['"]\s*:/g;
             this.collectMatches(keyPattern, dictContent, imports);
         }
@@ -76,7 +83,11 @@ export class PythonDependencyScanner {
         let match;
 
         while ((match = pattern.exec(content)) !== null) {
-            const tokens = match[1].trim().split(/\s+/);
+            const packagesText = match[1];
+            if (!packagesText) {
+                continue;
+            }
+            const tokens = packagesText.trim().split(/\s+/);
             for (const token of tokens) {
                 if (/^[a-zA-Z_][\w-]*$/.test(token)) {
                     imports.push(token);
