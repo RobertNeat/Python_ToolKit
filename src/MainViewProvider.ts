@@ -86,9 +86,6 @@ export class MainViewProvider implements vscode.WebviewViewProvider, vscode.Disp
             case 'installDependencies':
                 await this.installDependencies();
                 break;
-            case 'openVenvFolder':
-                await this.openVenvFolder();
-                break;
             case 'openScript':
                 await this.openSelectedScript();
                 break;
@@ -234,14 +231,6 @@ export class MainViewProvider implements vscode.WebviewViewProvider, vscode.Disp
         await vscode.commands.executeCommand('vscode.openFolder');
     }
 
-    private async openVenvFolder(): Promise<void> {
-        const workspacePath = this.getWorkspacePath();
-        if (!workspacePath) {
-            return;
-        }
-        await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(VenvManager.getVenvPath(workspacePath)));
-    }
-
     private async openSelectedScript(): Promise<void> {
         const script = this.scripts.find(item => item.filePath === this.selectedScriptPath);
         if (!script) {
@@ -295,7 +284,10 @@ export class MainViewProvider implements vscode.WebviewViewProvider, vscode.Disp
 
     private renderView(): void {
         if (this.view) {
-            this.view.webview.html = this.renderer.render(this.getState());
+            const editIconUri = this.view.webview.asWebviewUri(
+                vscode.Uri.joinPath(this.extensionUri, 'media', 'edit_fontawesome.svg')
+            ).toString();
+            this.view.webview.html = this.renderer.render(this.getState(), editIconUri, this.view.webview.cspSource);
         }
     }
 

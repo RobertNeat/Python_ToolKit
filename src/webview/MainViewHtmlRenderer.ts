@@ -4,7 +4,11 @@ import { escapeHtml, getNonce } from "./HtmlUtils";
 import { MainViewState } from "./MainViewState";
 
 export class MainViewHtmlRenderer {
-  public render(state: MainViewState): string {
+  public render(
+    state: MainViewState,
+    editIconUri: string,
+    cspSource: string,
+  ): string {
     const nonce = getNonce();
 
     return `<!DOCTYPE html>
@@ -12,20 +16,22 @@ export class MainViewHtmlRenderer {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource}; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
             <title>Python Venv Toolkit</title>
             <style>${this.getStyles()}</style>
         </head>
         <body>
-            <h1>Python Venv Toolkit ##</h1>
-            ${state.workspacePath ? this.getWorkspaceHtml(state, state.workspacePath) : this.getNoWorkspaceHtml(state)}
+            ${state.workspacePath ? this.getWorkspaceHtml(state, state.workspacePath, editIconUri) : this.getNoWorkspaceHtml(state, editIconUri)}
             <div id="toastContainer" class="toast-container"></div>
             <script nonce="${nonce}">${this.getScript()}</script>
         </body>
         </html>`;
   }
 
-  private getNoWorkspaceHtml(state: MainViewState): string {
+  private getNoWorkspaceHtml(
+    state: MainViewState,
+    editIconUri: string,
+  ): string {
     return `<div class="stack">
             <h2>Python environment</h2>
             ${this.getPythonHtml(state)}
@@ -46,12 +52,16 @@ export class MainViewHtmlRenderer {
                     <span class="value warn">Select a working directory to create .venv.</span>
                 </div>
             </div>
+            
+            <h2>Script</h2>
+            ${this.getScriptPickerHtml("", false, editIconUri)}
         </div>`;
   }
 
   private getWorkspaceHtml(
     state: MainViewState,
     workspacePath: string,
+    editIconUri: string,
   ): string {
     const selectedScript = state.scripts.find(
       (script) => script.filePath === state.selectedScriptPath,
@@ -69,12 +79,12 @@ export class MainViewHtmlRenderer {
             ${this.getPythonHtml(state)}
 
             <h2>Working directory</h2>
-            <div class="status">
+            <button id="openWorkspaceBtn" class="status path-panel" type="button" title="Change working directory">
                 <div class="row">
                     <span class="label">Path</span>
                     <span class="value">${escapeHtml(workspacePath)}</span>
                 </div>
-            </div>
+            </button>
             <button id="refreshBtn" class="secondary">Refresh</button>
 
             <h2>Venv environment</h2>
@@ -84,12 +94,12 @@ export class MainViewHtmlRenderer {
             ${
               state.scripts.length
                 ? `
-                <select id="scriptSelect">${scriptOptions}</select>
+                ${this.getScriptPickerHtml(scriptOptions, Boolean(selectedScript), editIconUri)}
                 ${selectedScript ? `<div class="script-meta">${escapeHtml(selectedScript.description || selectedScript.name)}</div>` : ""}
-                <button id="openScriptBtn" class="secondary">Open script</button>
                 <button id="runScriptBtn" ${state.isVenvOperationInProgress ? "disabled" : ""}>Run script</button>
             `
                 : `
+                ${this.getScriptPickerHtml("", false, editIconUri)}
                 <div class="status">
                     <span class="value warn">No .py files found in the working directory.</span>
                 </div>
@@ -141,7 +151,6 @@ export class MainViewHtmlRenderer {
                     </div>
                 </div>
                 <button id="installDependenciesBtn" class="secondary">Zainstaluj zależności z importów</button>
-                <button id="openVenvFolderBtn" class="secondary">Pokaż folder .venv</button>
                 <button id="reinitVenvBtn" class="secondary">Usuń i zainicjalizuj ponownie</button>
             </div>`;
     }
@@ -162,6 +171,23 @@ export class MainViewHtmlRenderer {
         </div>`;
   }
 
+  private getScriptPickerHtml(
+    scriptOptions: string,
+    canOpenScript: boolean,
+    editIconUri: string,
+  ): string {
+    const buttonDisabled = canOpenScript ? "" : " disabled";
+    const selectDisabled = scriptOptions ? "" : " disabled";
+    const options = scriptOptions || '<option value="">No scripts</option>';
+
+    return `<div class="script-picker">
+                <button id="openScriptBtn" class="icon-button secondary" type="button" title="Open script" aria-label="Open script"${buttonDisabled}>
+                    <img src="${escapeHtml(editIconUri)}" alt="">
+                </button>
+                <select id="scriptSelect"${selectDisabled}>${options}</select>
+            </div>`;
+  }
+
   private getStyles(): string {
     return `
                 body {
@@ -171,11 +197,6 @@ export class MainViewHtmlRenderer {
                     font-size: var(--vscode-font-size);
                     margin: 0;
                     padding: 14px;
-                }
-                h1 {
-                    font-size: 16px;
-                    font-weight: 600;
-                    margin: 0 0 14px;
                 }
                 h2 {
                     font-size: 12px;
@@ -209,10 +230,28 @@ export class MainViewHtmlRenderer {
                     opacity: 0.55;
                     cursor: not-allowed;
                 }
+                .icon-button {
+                    align-items: center;
+                    display: inline-flex;
+                    justify-content: center;
+                    min-height: 30px;
+                    padding: 0;
+                    width: 30px;
+                }
+                .icon-button img {
+                    display: block;
+                    filter: invert(1);
+                    height: 14px;
+                    opacity: 0.9;
+                    width: 14px;
+                }
                 select {
                     color: var(--vscode-dropdown-foreground);
                     background: var(--vscode-dropdown-background);
                     border-color: var(--vscode-dropdown-border);
+                }
+                select:disabled {
+                    opacity: 0.55;
                 }
                 .stack {
                     display: grid;
@@ -225,6 +264,15 @@ export class MainViewHtmlRenderer {
                     display: grid;
                     gap: 6px;
                     background: var(--vscode-editorWidget-background);
+                }
+                .path-panel {
+                    color: var(--vscode-foreground);
+                    font: inherit;
+                    min-height: auto;
+                    text-align: left;
+                }
+                .path-panel:hover:not(:disabled) {
+                    background: var(--vscode-list-hoverBackground);
                 }
                 .row {
                     display: grid;
@@ -251,6 +299,12 @@ export class MainViewHtmlRenderer {
                     font-size: 12px;
                     line-height: 1.4;
                     overflow-wrap: anywhere;
+                }
+                .script-picker {
+                    align-items: stretch;
+                    display: grid;
+                    gap: 6px;
+                    grid-template-columns: 30px minmax(0, 1fr);
                 }
                 .toast-container {
                     position: fixed;
@@ -298,7 +352,6 @@ export class MainViewHtmlRenderer {
                 document.getElementById('initVenvBtn')?.addEventListener('click', () => post('initVenv'));
                 document.getElementById('reinitVenvBtn')?.addEventListener('click', () => post('reinitVenv'));
                 document.getElementById('installDependenciesBtn')?.addEventListener('click', () => post('installDependencies'));
-                document.getElementById('openVenvFolderBtn')?.addEventListener('click', () => post('openVenvFolder'));
                 document.getElementById('openScriptBtn')?.addEventListener('click', () => post('openScript'));
                 document.getElementById('runScriptBtn')?.addEventListener('click', () => post('runScript'));
                 document.getElementById('scriptSelect')?.addEventListener('change', event => {
