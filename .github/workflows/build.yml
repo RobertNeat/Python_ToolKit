@@ -4,41 +4,70 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: 24.14.1
+  NPM_VERSION: 11.11.0
+  VSCE_VERSION: 3.9.2
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6.0.0
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
+      - name: Setup npm
+        run: npm install --global npm@${{ env.NPM_VERSION }}
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
-      - name: Set version (auto-increment)
+      - name: Verify build
+        run: npm run package
+
+      - name: Set version
+        id: version
+        shell: bash
         run: |
           BASE_VERSION=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
           NEW_VERSION="${BASE_VERSION}.${GITHUB_RUN_NUMBER}"
           npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "VERSION=$NEW_VERSION" >> "$GITHUB_ENV"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $NEW_VERSION"
 
       - name: Package VSIX
-        run: npx @vscode/vsce package --no-dependencies
+        id: package
+        shell: bash
+        run: |
+          npx --yes @vscode/vsce@${{ env.VSCE_VERSION }} package --no-dependencies
+          VSIX_FILE=$(ls *.vsix | head -n 1)
+          echo "VSIX_FILE=$VSIX_FILE" >> "$GITHUB_ENV"
+          echo "vsix_file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
+          echo "VSIX file: $VSIX_FILE"
 
       - name: Upload VSIX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
-          name: py-doc-automator-${{ env.VERSION }}
-          path: "*.vsix"
+          name: python-venv-toolkit-${{ steps.version.outputs.version }}
+          path: ${{ steps.package.outputs.vsix_file }}
           retention-days: 90
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" "${{ steps.package.outputs.vsix_file }}" \
+            --title "Python Venv Toolkit ${{ steps.version.outputs.version }}" \
+            --notes "Automated VSIX build for commit ${{ github.sha }}."
