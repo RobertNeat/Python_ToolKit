@@ -10,7 +10,6 @@ permissions:
 env:
   NODE_VERSION: 24.14.1
   NPM_VERSION: 11.11.0
-  VSCE_VERSION: 3.9.2
 
 jobs:
   build:
@@ -51,7 +50,7 @@ jobs:
         id: package
         shell: bash
         run: |
-          npx --yes @vscode/vsce@${{ env.VSCE_VERSION }} package --no-dependencies
+          npm exec -- vsce package --no-dependencies
           VSIX_FILE=$(ls *.vsix | head -n 1)
           echo "VSIX_FILE=$VSIX_FILE" >> "$GITHUB_ENV"
           echo "vsix_file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
